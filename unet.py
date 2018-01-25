@@ -57,6 +57,7 @@ class Unet(nn.Module):
         Creates a u-net network
         :param in_dims: input image number of channels
         :param out_dims: number of feature maps
+        :param: image_channels: number of channels in output generation image
         :param k: width coefficient
         """
         super(Unet, self).__init__()
@@ -92,4 +93,4 @@ class Unet(nn.Module):
         e = self.u2(b, d)
         f = self.u3(e, a)
 
-        return self.conv1x1(f), self.conv_image(f)
+        return self.conv1x1(f), F.tanh(self.conv_image(f))
