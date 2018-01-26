@@ -52,7 +52,7 @@ class Unet(nn.Module):
     Deep neural network with skip connections
     """
 
-    def __init__(self, in_dims, out_dims, image_channels=1, k=1, s=1):
+    def __init__(self, num_z_channels=3, num_classes=3, image_channels=1, k=1, s=1):
         """
         Creates a u-net network
         :param in_dims: input image number of channels
@@ -61,7 +61,7 @@ class Unet(nn.Module):
         :param k: width coefficient
         """
         super(Unet, self).__init__()
-        self.conv = nn.Conv2d(in_dims, 8 * k, 3, padding=1)
+        self.conv = nn.Conv2d(num_z_channels, 8 * k, 3, padding=1)
         self.d1 = DownModule(8 * k, 16 * k, s)
         self.d2 = DownModule(16 * k, 32 * k, s+1)
         self.d3 = DownModule(32 * k, 64 * k, s+2)
@@ -71,7 +71,7 @@ class Unet(nn.Module):
         self.u2 = UpModule(32 * k, 16 * k)
         self.u3 = UpModule(16 * k, 8 * k)
 
-        self.conv1x1 = nn.Conv2d(8 * k, out_dims, 1, padding=0)
+        self.conv1x1 = nn.Conv2d(8 * k, num_classes, 1, padding=0)
         self.conv_image = nn.Conv2d(8 * k, image_channels, 3, padding=1)
         
         for m in self.modules():
@@ -93,4 +93,4 @@ class Unet(nn.Module):
         e = self.u2(b, d)
         f = self.u3(e, a)
 
-        return self.conv1x1(f), F.tanh(self.conv_image(f))
+        return F.tanh(self.conv_image(f)), self.conv1x1(f)
