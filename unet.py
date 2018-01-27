@@ -38,7 +38,7 @@ class UpModule(nn.Module):
         self.smoothing = nn.Conv2d(out_dims, out_dims, 3, padding=1)
 
     def forward(self, x, y):
-        x = F.upsample_bilinear(x, y.size()[2:])
+        #x = F.upsample_bilinear(x, y.size()[2:])
         x = torch.cat([x, y], dim=1)
         x = self.conv1x1(x)
         x = self.relu(x)
@@ -52,7 +52,7 @@ class Unet(nn.Module):
     Deep neural network with skip connections
     """
 
-    def __init__(self, num_z_channels=3, num_classes=3, image_channels=1, k=1, s=1):
+    def __init__(self, num_z_channels=3, num_classes=3, image_channels=1, k=1, s=1, is_generative=True):
         """
         Creates a u-net network
         :param in_dims: input image number of channels
@@ -72,7 +72,11 @@ class Unet(nn.Module):
         self.u3 = UpModule(16 * k, 8 * k)
 
         self.conv1x1 = nn.Conv2d(8 * k, num_classes, 1, padding=0)
-        self.conv_image = nn.Conv2d(8 * k, image_channels, 3, padding=1)
+        
+        self.is_generative = is_generative
+        
+        if is_generative:
+            self.conv_image = nn.Conv2d(8 * k, image_channels, 3, padding=1)
         
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -92,5 +96,7 @@ class Unet(nn.Module):
         d = self.u1(dd, c)
         e = self.u2(b, d)
         f = self.u3(e, a)
-
-        return F.tanh(self.conv_image(f)), self.conv1x1(f)
+        if self.is_generative:
+            return F.tanh(self.conv_image(f)), self.conv1x1(f)
+        else:
+            return self.conv1x1(f)
